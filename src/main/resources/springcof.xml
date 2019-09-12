@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        ">
+    <!--  配置约束文件，需要哪一个约束，配哪一个约束，可以多，一定得匹配-->
+<!-- 引入db.properties-->
+<context:property-placeholder location="classpath:db.properties"/>
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${db.driver}"/>
+        <property name="jdbcUrl" value="${db.url}"/>
+        <property name="user" value="${db.user}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="initialPoolSize" value="${db.inn}"/>
+        <property name="maxPoolSize" value="${db.max}"/>
+    </bean>
+    <!--开启注解扫描 -->
+<context:component-scan base-package="com.wwb">
+    <!--扫描出了Controller 意外的注解 ，exclude-filter 是不包括的过滤器，与include-filter 过滤器相反 -->
+    <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+</context:component-scan>
+    <!-- 创建一个事务管理类切面对象  -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 需要用到mybatis 的sqlsessionFactory 来创建对象-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="logImpl" value="org.apache.ibatis.logging.log4j.Log4jImpl"/>
+                <property name="lazyLoadingEnabled" value="true"/>
+            </bean>
+        </property>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 创建一个接口代理类对象-->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property value="sqlSessionFactory" name="sqlSessionFactoryBeanName"/>
+        <property name="basePackage" value="com.wwb.mapper"/>
+    </bean>
+
+    <!--开启事务注解 -->
+    <tx:annotation-driven/>
+</beans>
